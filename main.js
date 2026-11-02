@@ -217,7 +217,7 @@
   const heroField = new Tunnel($('#heroField'), { count: 34, outline: true, speed: 0.05, clear: 0.55, color: '15,15,16' });
   const lifeTunnel = new Tunnel($('#tunnel'), {
     count: 46, speed: 0.11, clear: 0.42,
-    images: ['assets/liberty.webp', 'assets/niagara.webp', 'assets/celebration.webp', 'assets/trek.webp', 'assets/sports.webp', 'assets/portrait.webp', 'assets/zoom-trader.webp', 'assets/rai.webp', 'assets/ai-assistant.webp', 'assets/msa-ecn.webp']
+    images: ['assets/liberty.webp', 'assets/niagara.webp', 'assets/celebration.webp', 'assets/trek.webp', 'assets/sports.webp', 'assets/portrait.webp', 'assets/zoom-trader.webp', 'assets/rai.webp', 'assets/ai-assistant.webp']
   });
   if (hasGsap) ScrollTrigger.create({
     trigger: '#life', start: 'top bottom', end: 'bottom top',

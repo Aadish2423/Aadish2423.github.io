@@ -56,7 +56,8 @@ const ART = {
   </svg>`
 };
 
-const PROJECTS = [
+// Set hidden: true to take a project off the site without deleting its write-up.
+const ALL_PROJECTS = [
   {
     id: 'llm-autopilot',
     title: 'LLM Cost Auto-Pilot',
@@ -103,6 +104,7 @@ const PROJECTS = [
   },
   {
     id: 'prachaar',
+    hidden: true,
     title: 'Swastik Prachaar',
     kicker: 'Agentic AI · Web app · 2026',
     short: 'An agentic marketing platform where AI agents research, write and design campaigns, and a person approves every piece before it goes out.',
@@ -165,6 +167,7 @@ const PROJECTS = [
   },
   {
     id: 'msaecn',
+    hidden: true,
     title: 'MSA-ECN',
     kicker: 'Speech emotion · 2025',
     short: 'A multi-scale attention-based emotion capsule network: CNN + Conformer + capsules on RAVDESS, reaching about 85% accuracy.',
@@ -227,3 +230,5 @@ const PROJECTS = [
     repo: 'https://github.com/Aadish2423/talentscout-hiring-assistant'
   }
 ];
+
+const PROJECTS = ALL_PROJECTS.filter(p => !p.hidden);
