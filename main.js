@@ -6,12 +6,17 @@
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const hasGsap = typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined';
   const isTouch = matchMedia('(hover: none)').matches;
+  const small = () => innerWidth < 760;
+  const lowFx = isTouch || small();   // lighter effects on phones and tablets
 
   /* ---------- smooth scroll ---------- */
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   window.scrollTo(0, 0);
   let lenis = null;
-  if (hasGsap) gsap.registerPlugin(ScrollTrigger);
+  if (hasGsap) {
+    gsap.registerPlugin(ScrollTrigger);
+    ScrollTrigger.config({ ignoreMobileResize: true });
+  }
   if (!reduced && typeof Lenis !== 'undefined') {
     lenis = new Lenis({ lerp: 0.1, smoothWheel: true });
     if (hasGsap) {
@@ -32,8 +37,31 @@
     const id = a.getAttribute('href');
     if (id.length < 2 && id !== '#') return;
     e.preventDefault();
-    scrollToEl(id === '#top' || id === '#' ? 0 : id);
+    const go = () => scrollToEl(id === '#top' || id === '#' ? 0 : id);
+    if (document.documentElement.classList.contains('menu-open')) { closeMenu(); setTimeout(go, 350); }
+    else go();
   }));
+
+  /* ---------- mobile menu ---------- */
+  const menuBtn = $('#menuBtn');
+  const menu = $('#mobileMenu');
+  function openMenu() {
+    document.documentElement.classList.add('menu-open');
+    menuBtn.setAttribute('aria-expanded', 'true');
+    menuBtn.setAttribute('aria-label', 'Close menu');
+    menu.setAttribute('aria-hidden', 'false');
+    lenis?.stop();
+  }
+  function closeMenu() {
+    document.documentElement.classList.remove('menu-open');
+    menuBtn.setAttribute('aria-expanded', 'false');
+    menuBtn.setAttribute('aria-label', 'Open menu');
+    menu.setAttribute('aria-hidden', 'true');
+    lenis?.start();
+  }
+  menuBtn.addEventListener('click', () => document.documentElement.classList.contains('menu-open') ? closeMenu() : openMenu());
+  addEventListener('keydown', e => { if (e.key === 'Escape' && document.documentElement.classList.contains('menu-open')) closeMenu(); });
+  addEventListener('resize', () => { if (!small()) closeMenu(); });
 
   /* ---------- nav ---------- */
   const nav = $('#nav');
@@ -53,8 +81,11 @@
   });
   pill.addEventListener('mouseleave', () => moveInd(activeLink));
   const sections = links.map(a => $(a.getAttribute('href')));
+  const darkZones = $$('[data-nav="dark"]');
   const onScrollNav = () => {
     nav.classList.toggle('scrolled', scrollY > 40);
+    const nb = nav.offsetHeight / 2;
+    nav.classList.toggle('on-dark', darkZones.some(z => { const r = z.getBoundingClientRect(); return r.top < nb && r.bottom > nb; }));
     const mid = innerHeight * 0.45;
     let cur = null;
     sections.forEach((s, i) => { const r = s.getBoundingClientRect(); if (r.top < mid && r.bottom > mid) cur = links[i]; });
@@ -115,7 +146,7 @@
       c.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) perspective(700px) rotateY(${(Math.sin(a) * 38).toFixed(1)}deg) scale(${s.toFixed(3)})`;
       c.style.zIndex = z > 0 ? 20 : 5;
       c.style.opacity = op.toFixed(3);
-      c.style.filter = blur > 0.3 ? `blur(${blur.toFixed(1)}px)` : 'none';
+      c.style.filter = !lowFx && blur > 0.3 ? `blur(${blur.toFixed(1)}px)` : 'none';
     });
     floatCards.forEach(c => {
       const d = +c.dataset.depth;
@@ -152,7 +183,7 @@
       const ang = Math.random() * Math.PI * 2;
       const r = this.clear + Math.random() * (1.25 - this.clear);
       return {
-        x: Math.cos(ang) * r * 1.35, y: Math.sin(ang) * r, z,
+        x: Math.cos(ang) * r, y: Math.sin(ang) * r, z,
         rot: (Math.random() - 0.5) * 0.7, spin: (Math.random() - 0.5) * 0.3,
         ar: [1, 1, 1.33, 0.75, 1.5][Math.floor(Math.random() * 5)],
         img: this.imgs.length ? this.imgs[Math.floor(Math.random() * this.imgs.length)] : null,
@@ -173,16 +204,16 @@
       ctx.clearRect(0, 0, w, h);
       const v = reduced ? 0 : (this.speed + this.boost);
       this.boost *= 0.94;
-      const spread = Math.min(w, h) * 0.42;
-      const base = Math.min(w, h) * 0.075;
+      const spreadX = w * 0.36, spreadY = h * 0.42;   // fills wide and tall screens alike
+      const base = Math.sqrt(w * h) * 0.065;
       this.tiles.forEach(t => {
         t.z -= v * dt; t.rot += t.spin * dt * (reduced ? 0 : 1);
         if (t.z <= 0.04) Object.assign(t, this.spawn(1));
       });
       this.tiles.sort((a, b) => b.z - a.z);
       for (const t of this.tiles) {
-        const px = w / 2 + (t.x * spread) / t.z;
-        const py = h / 2 + (t.y * spread) / t.z;
+        const px = w / 2 + (t.x * spreadX) / t.z;
+        const py = h / 2 + (t.y * spreadY) / t.z;
         const s = (base * t.size) / t.z;
         const tw = s * Math.sqrt(t.ar), th = s / Math.sqrt(t.ar);
         if (px + tw < -50 || px - tw > w + 50 || py + th < -50 || py - th > h + 50) continue;
@@ -214,9 +245,9 @@
     }
   }
 
-  const heroField = new Tunnel($('#heroField'), { count: 34, outline: true, speed: 0.05, clear: 0.55, color: '15,15,16' });
+  const heroField = new Tunnel($('#heroField'), { count: small() ? 18 : 34, outline: true, speed: 0.05, clear: 0.55, color: '15,15,16' });
   const lifeTunnel = new Tunnel($('#tunnel'), {
-    count: 46, speed: 0.11, clear: 0.42,
+    count: small() ? 30 : 46, speed: 0.11, clear: small() ? 0.5 : 0.42,
     images: ['assets/liberty.webp', 'assets/niagara.webp', 'assets/celebration.webp', 'assets/trek.webp', 'assets/sports.webp', 'assets/portrait.webp', 'assets/zoom-trader.webp', 'assets/rai.webp', 'assets/ai-assistant.webp']
   });
   if (hasGsap) ScrollTrigger.create({
@@ -279,6 +310,13 @@
       if (en.isIntersecting) { setTimeout(() => fan.classList.remove('stacked'), 150); ob.disconnect(); }
     }, { threshold: 0.35 }).observe(fan);
   }
+  // tap (or click) a photo to bring it to the front
+  let fanZ = 10;
+  $$('figure', fan).forEach(f => f.addEventListener('click', () => {
+    $$('figure', fan).forEach(o => o !== f && o.classList.remove('front'));
+    f.style.zIndex = ++fanZ;
+    f.classList.toggle('front');
+  }));
 
   /* ---------- work wheel ---------- */
   const wheel = $('#wheel');
@@ -307,17 +345,39 @@
   });
 
   const info = $('#workInfo');
-  let active = -1, wheelF = 0, workST = null;
-  const setActive = i => {
-    if (i === active) return;
-    active = i;
-    const p = PROJECTS[i];
+  const stage = $('#workStage');
+  const hint = $('#wheelHint');
+  if (isTouch) hint.textContent = 'Swipe or scroll to spin · tap a card to open';
+  let active = -1, wheelF = 0, workST = null, cardScale = 1;
+  const fillInfo = p => {
     $('#wiKicker').textContent = p.kicker;
     $('#wiTitle').textContent = p.title;
     $('#wiDesc').textContent = p.short;
     $('#wiTags').innerHTML = p.tags.map(t => `<span>${t}</span>`).join('');
+  };
+  const setActive = i => {
+    if (i === active) return;
+    active = i;
+    fillInfo(PROJECTS[i]);
     $('#workIndex').textContent = pad(i + 1);
+    $('#wPrev').disabled = i === 0;
+    $('#wNext').disabled = i === N - 1;
     info.classList.remove('swap'); void info.offsetWidth; info.classList.add('swap');
+  };
+  // Place the wheel so the active card always sits below the project text,
+  // and shrink the cards on short screens (small phones, landscape).
+  const layoutWheel = () => {
+    const top0 = stage.getBoundingClientRect().top;
+    let infoBottom = 0;
+    PROJECTS.forEach(p => { fillInfo(p); infoBottom = Math.max(infoBottom, info.getBoundingClientRect().bottom - top0); });
+    if (active >= 0) fillInfo(PROJECTS[active]);
+    const R = parseFloat(getComputedStyle(wheel).getPropertyValue('--R'));
+    const cardH = cards[0].offsetHeight * 1.1;
+    const hintH = hint.offsetParent ? 42 : 12;
+    const avail = stage.clientHeight - infoBottom - 14 - hintH;
+    cardScale = clamp(avail / cardH, 0.42, 1);
+    const centerY = infoBottom + 14 + Math.min(avail, cardH * cardScale + 80) / 2;
+    wheel.style.top = `${(centerY + R).toFixed(1)}px`;
   };
   const renderWheel = () => {
     const step = innerWidth < 760 ? 21 : 15;
@@ -326,7 +386,7 @@
       const d = i - wheelF;
       const ang = d * step;
       const near = Math.max(0, 1 - Math.abs(d));
-      const s = 0.86 + near * 0.24;
+      const s = (0.86 + near * 0.24) * cardScale;
       c.style.transform = `rotate(${ang.toFixed(2)}deg) translateY(${-R}px) scale(${s.toFixed(3)})`;
       c.style.zIndex = 100 - Math.round(Math.abs(d) * 10);
       c.style.opacity = clamp(1.4 - Math.abs(ang) / 55, 0, 1).toFixed(3);
@@ -340,7 +400,8 @@
       scrollToEl(y, { duration: 1.1 });
     } else { wheelF = i; setActive(i); renderWheel(); }
   };
-  setActive(0); renderWheel();
+  setActive(0); layoutWheel(); renderWheel();
+  document.fonts?.ready.then(() => { layoutWheel(); renderWheel(); });
   if (hasGsap) {
     workST = ScrollTrigger.create({
       trigger: '#workStage', start: 'top top', end: () => `+=${innerHeight * (N - 1) * 0.55}`,
@@ -353,8 +414,18 @@
       }
     });
   }
-  addEventListener('resize', renderWheel);
+  let rsT;
+  addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(() => { layoutWheel(); renderWheel(); }, 120); });
   $('#wiOpen').addEventListener('click', () => openDrawer(active));
+  $('#wPrev').addEventListener('click', () => goTo(clamp(active - 1, 0, N - 1)));
+  $('#wNext').addEventListener('click', () => goTo(clamp(active + 1, 0, N - 1)));
+  // horizontal swipe on phones spins the wheel one card at a time
+  let sx = 0, sy = 0;
+  stage.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+  stage.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.3) goTo(clamp(active + (dx < 0 ? 1 : -1), 0, N - 1));
+  }, { passive: true });
 
   /* ---------- case study drawer ---------- */
   const drawer = $('#drawer');

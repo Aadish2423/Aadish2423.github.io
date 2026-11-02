@@ -29,8 +29,28 @@
     <a href="#experience">Experience</a>
     <a href="#contact">Contact</a>
   </nav>
-  <a href="mailto:aadishbane23022005@gmail.com" class="btn btn-dark btn-sm magnetic">Let's talk <span class="arrow-ne">↗</span></a>
+  <div class="nav-right">
+    <a href="mailto:aadishbane23022005@gmail.com" class="btn btn-dark btn-sm magnetic nav-talk">Let's talk <span class="arrow-ne">↗</span></a>
+    <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu"><span></span><span></span></button>
+  </div>
 </header>
+
+<div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+  <nav aria-label="Mobile">
+    <a href="#about"><small>01</small>About</a>
+    <a href="#work"><small>02</small>Work</a>
+    <a href="#experience"><small>03</small>Experience</a>
+    <a href="#contact"><small>04</small>Contact</a>
+  </nav>
+  <div class="mm-foot">
+    <a class="btn btn-dark" href="mailto:aadishbane23022005@gmail.com">Email me <span class="arrow-ne">↗</span></a>
+    <div class="mm-links">
+      <a href="https://github.com/Aadish2423" target="_blank" rel="noopener">GitHub ↗</a>
+      <a href="https://www.linkedin.com/in/aadish-bane-292a221ba/" target="_blank" rel="noopener">LinkedIn ↗</a>
+      <a href="assets/Aadish_Bane_Resume.pdf" target="_blank" rel="noopener">Résumé ↗</a>
+    </div>
+  </div>
+</div>
 
 <main id="top">
 
@@ -136,7 +156,11 @@
   <div class="work-stage" id="workStage">
     <div class="work-head">
       <div class="section-label"><span>02</span> Selected work <sup id="workCount">(06)</sup></div>
-      <div class="work-progress"><span id="workIndex">01</span><i><b id="workBar"></b></i><span id="workTotal">06</span></div>
+      <div class="work-progress">
+        <button class="wp-btn" id="wPrev" type="button" aria-label="Previous project">←</button>
+        <span id="workIndex">01</span><i><b id="workBar"></b></i><span id="workTotal">06</span>
+        <button class="wp-btn" id="wNext" type="button" aria-label="Next project">→</button>
+      </div>
     </div>
 
     <div class="work-info" id="workInfo" aria-live="polite">
@@ -150,7 +174,7 @@
     </div>
 
     <div class="wheel" id="wheel"></div>
-    <p class="wheel-hint">Scroll to spin · click a card to open</p>
+    <p class="wheel-hint" id="wheelHint">Scroll to spin · click a card to open</p>
   </div>
 </section>
 
@@ -201,7 +225,7 @@
 </section>
 
 <!-- ============ TUNNEL ============ -->
-<section class="tunnel" id="life">
+<section class="tunnel" id="life" data-nav="dark">
   <div class="tunnel-sticky">
     <canvas id="tunnel" aria-hidden="true"></canvas>
     <div class="tunnel-copy">
